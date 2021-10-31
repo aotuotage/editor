@@ -1,0 +1,104 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+body,html{
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+.nav{
+    width:100%;
+    height:64px;
+    background:#000;  
+}
+#editor {
+    width: 100%;
+    height: 93%;
+    position:fixed;
+    font-size: 26px !important;
+    margin-left: 172px;
+    margin-top: -14px;
+}
+.title{
+    color: #fff;
+    padding-left: 20px;
+    padding-top: 20px;
+}
+.fictitious{
+    width: 400px;
+    height: 800px;
+    background: transparent;
+    position: absolute;
+    right: 0;
+    border: none;
+    outline: none;
+}
+.file_text{
+    font-size: 14px;
+    margin-left: 80px;
+}
+.list{
+    width: 170px;
+    background: #000;
+    position: fixed;
+    left: 0;
+    top: 64px;
+    height: 100%;
+    color: #fff;
+    padding-left: 15px;
+    overflow-y: scroll;
+    font-size: 16px;
+    z-index: 99;
+}
+
+/* 设置滚动条的样式 */
+::-webkit-scrollbar {
+    width:5px;
+}
+/* 滚动槽 */
+::-webkit-scrollbar-track {
+    border-radius:2px;
+}
+/* 滚动条滑块 */
+::-webkit-scrollbar-thumb {
+    border-radius:2px;
+    background:rgba(0,0,0,0.1);
+}
+.flie_list,.mode_list{
+    text-align: left;
+    line-height: 25px;
+    margin-top: 15px;
+    list-style: none;
+    padding-bottom: 80px;
+}
+.list_li,.folder,.mode_li{
+    position: relative;
+    padding: 10px 0;
+    cursor: pointer;
+    border-bottom: 1px solid #333;
+    padding-left: 20px;
+}
+.elui_icon{
+    position: absolute;
+    left: 0px;
+    top: 14px;
+}
+.indent{
+    margin-left: 20px;
+    width: 150px;
+}
+.one_title,.two_title{
+    position: relative;
+}
+.one_title_icon,.two_title_icon{
+    position: absolute;
+    right: 10px;
+    top: 5px;
+}
+.load_div{
+    position: absolute;
+    right: 20px;
+    color: #fff;
+    top: 24px;
+}

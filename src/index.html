@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>张大帅编辑器</title>
+    <script src="./jquery.min.js"></script>
+    <link rel="stylesheet" href="./index.css"/>
+    <!-- element-ui引入样式 -->
+    <link rel="stylesheet" href="./element-ui/index.css">
+    <!-- element-ui引入组件库 -->
+    <!-- <script src="./element-ui/index.js"></script> -->
+</head>
+<body>
+    <div class="nav">
+        <h3 class="title">
+            代码编辑区
+            <span class="stateone"></span>
+            <span class="file_text">
+                当前文件:
+                <span class="flie"></span>
+            </span>
+        </h3>
+        <div class="load_div">
+            模块:
+            <span class="load_text">
+                未加载
+            </span>
+        </div>
+    </div>
+    <div id="editor" onkeydown="return textChange(event)"></div>
+    <div class="list">
+        <h4 class="one_title">文件列表<i class="el-icon-minus one_title_icon"></i></h4>
+        <ul class="flie_list">
+        </ul>
+        <h4 class="two_title">高效模块<i class="el-icon-minus two_title_icon"></i></h4>
+        <ul class="mode_list">
+        </ul>
+    </div>
+     <!-- 高亮及代码补全插件 -->
+    <script src='./tmp/ace.js'></script>
+    <script src="./tmp/ext-language_tools.js"></script>
+    <script>
+        //读写模块
+        var fs = require("fs");
+        const path = require("path");
+        //菜单模块
+        var Menu = require('electron').remote.Menu;
+        //窗口根
+        const BrowserWindow = require('electron').remote.BrowserWindow;
+        var app = require('electron').remote.app;
+        var electron = require('electron');
+        /*代码高亮及提示部分*/
+        var languageTools = ace.require("ace/ext/language_tools");
+        //当前编辑文件或文件夹路径
+        var theflie = '';
+        //模块url
+        var clickModeUrl;
+        var acemode = true;
+        //html编辑器
+        var onecontent = null;
+        var onechange = 0;
+        var editor = ace.edit("editor");
+        // editor.session.setMode("ace/mode/html");
+        editor.session.setMode("ace/mode/html");
+        editor.setTheme("ace/theme/tomorrow_night_blue");
+        editor.setFontSize(26);
+        // enable autocompletion and snippets
+        editor.setOptions({    
+            wrap: true, // 换行
+            autoScrollEditorIntoView: true, // 自动滚动编辑器视图
+            enableBasicAutocompletion: true,// 启用基本完成 不推荐使用
+            enableSnippets: true,// 启用代码段
+            enableLiveAutocompletion: true // 智能补全
+        });
+        editor.getSession().on('change', function(e) { 
+            onechange++;
+            if(onechange >1){
+                onecontent = editor.getValue();
+                $(".stateone").html("（编辑中）")
+            }
+        });
+        // 读取输入文件
+        var iconv = require('iconv-lite');
+        var inputHtml = ``;
+        var dir = __dirname;
+        var dirend = dir.replace(/src/, 'inputPage')
+        var direndTwo = dir.replace(/src/, 'outputPage')
+        fs.readdir(dirend, function(err,data) {
+            if (err) {
+                return console.log(err);
+            }else{
+                data.forEach((name)=>{
+                    $('.mode_list').append(`
+                    <li class="mode_li" data-url="${dirend}/${name}">
+                        <i class="el-icon-tickets elui_icon"></i>
+                        ${name}
+                    </li>
+                    `)
+                })
+                clickModeList();
+            }
+        });
+        function clickModeList(){
+            $(".mode_li").unbind('click').bind('click',function(){
+                var theflieData = $(this).data("url");
+                clickModeUrl = theflieData;
+                fs.readFile(theflieData, function(err,data) {
+                    if (err) {
+                        return console.log(err);
+                    }else{
+                        //iconv模块转换编码
+                        inputHtml = iconv.decode(data,'utf8');
+                        num = -1;
+                        $(".load_text").fadeOut();
+                        setTimeout(function() {
+                            $(".load_text").text('模块已加载').fadeIn();
+                        }, 500);
+                    }
+                });
+                // extension(theflie);
+            })
+        }
+
+        //拦截Alt
+        var num = -1;
+        var theHtml = '';
+        function textChange(event) {
+            if(event.key == 'Alt'){
+                num++;
+                var fileExtension = theflie.split('.').pop();
+                console.log(acemode, fileExtension);
+                if(acemode == false && fileExtension == 'html'){
+                    // editor.getSession().setUseWorker(false);
+                    editor.session.setMode("ace/mode/javascript");
+                }
+                // editor.session.setMode("ace/mode/javascript");
+                if(num < inputHtml.length){
+                    theHtml = inputHtml.slice(num, num + 1).toString();
+                    //光标处插入数据editor.insert方法
+                    editor.insert(theHtml);
+                }
+            }
+        }
+
+        //菜单设置
+        var win = '';//子窗口变量
+        if (process.platform === 'darwin') {
+            const template = [
+            {
+                label: "Application",
+                submenu: [
+                { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+                ]
+            }, 
+            {
+                label: "Edit",
+                submenu: [
+                { 
+                    label: "保存文件", 
+                    accelerator: "CmdOrCtrl+S", 
+                    selector: "Save:",
+                    click: function (){
+                        //文件读取
+                        if(theflie == ''){
+                            electron.remote.dialog.showSaveDialog({
+                                title: "请输入要保存的文件名",
+                                buttonLabel: "保存",
+                                filters: [
+                                    { name: 'Custom File Type', extensions: ['js', 'html', 'json', 'css', 'text'] },
+                                ]
+                            },function(result){
+                                theflie = result;
+                                $(".flie").text(result);
+                                //文件写入
+                                var twocontent = editor.getValue();
+                                fs.writeFile(result, twocontent, function(err) {
+                                    if (err) {
+                                        return console.log(err);
+                                    } else {
+                                        $(".stateone").html("（保存成功）");
+                                    }
+                                });
+                            })
+                        }else{
+                            //文件写入
+                            var onecontent = editor.getValue();
+                            fs.writeFile(`${theflie}`, onecontent, function(err) {
+                                if (err) {
+                                    return console.log(err);
+                                } else {
+                                    $(".stateone").html("（保存成功）");
+                                }
+                            });
+                        }
+                    }
+                },
+                { 
+                    label: "打开文件", 
+                    accelerator: "CmdOrCtrl+O", 
+                    selector: "Open:",
+                    click: function () {
+                        //打开文件弹窗
+                        electron.remote.dialog.showOpenDialog({
+                            properties:['openFile']
+                        },function(data){
+                            if(data.length == 1){
+                                fs.readFile(`${data[0]}`, function(err,data) {
+                                    if (err) {
+                                        return console.log(err);
+                                    }else{
+                                        editor.setValue(data.toString());
+                                    }
+                                });
+                            }
+                            theflie = data[0];
+                            $(".flie").text(theflie);
+                            extension(theflie);
+                        })
+                    }
+                },
+                { label: "复制", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+                { label: "粘贴", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+                // { label: "剪切", accelerator: "CmdOrCtrl+X", selector: "shear:" },
+                { 
+                    label: "浏览器打开本代码", 
+                    accelerator: "CmdOrCtrl+B", 
+                    selector: "browser:" ,
+                    click: function () {
+                        win = new BrowserWindow({width:1600,height:1000});
+                        win.webContents.openDevTools();
+                        win.on('close', function () { win = null });
+                        win.loadURL(`file://${direndTwo}/index.html`);
+                        win.show();
+                    }
+                },
+                { 
+                    label: "打开工作区", 
+                    accelerator: "CmdOrCtrl+R", 
+                    selector: "region:" ,
+                    click: function () {
+                        electron.remote.dialog.showOpenDialog({
+                            properties:['openDirectory']
+                        }, (files) => {
+                            theflie = files[0];
+                            fs.readdir(files[0],(err,files)=>{
+                                if (err) {
+                                    console.log(err);
+                                } else{
+                                    files.forEach((name)=>{
+                                        var reg = /^(.*)(\.)(.{1,8})$/;
+                                        if(reg.test(name)){
+                                            $('.flie_list').append(`
+                                            <li class="list_li" data-url="${theflie}/${name}">
+                                                <i class="el-icon-tickets elui_icon"></i>
+                                                ${name}
+                                            </li>
+                                            `)
+                                            clickList();
+                                        }else{
+                                            $('.flie_list').append(`
+                                            <li class="folder" data-url="${theflie}/${name}">
+                                                <i class="el-icon-folder elui_icon"></i>
+                                                ${name}
+                                            </li>
+                                            `)
+                                            clickFolder();
+                                        }
+                                    })
+                                }
+                            })
+                        })
+                    }
+                }
+                ]
+            }
+            ];
+            Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+        } else {
+            Menu.setApplicationMenu(null)
+        }
+        //根据后缀判断编设置程语言类型
+        function extension(type){
+            var fileExtension = type.split('.').pop();
+            acemode = false;
+            if(fileExtension == 'js'){
+                editor.session.setMode("ace/mode/javascript");
+            }else if(fileExtension == 'css'){
+                editor.session.setMode("ace/mode/css");
+            }else{
+                editor.session.setMode("ace/mode/html");
+            }
+        }
+        //jq dom操作区域
+        function clickList() {
+            $(".list_li").unbind('click').bind('click',function(){
+                var theflieData = $(this).data("url");
+                theflie = theflieData;
+                $(".flie").text(theflie);
+                fs.readFile(theflieData, function(err,data) {
+                    if (err) {
+                        return console.log(err);
+                    }else{
+                        editor.setValue(data.toString());
+                    }
+                });
+                extension(theflie);
+            })
+        }
+        function clickFolder() {
+            $(".folder").unbind('click').bind('click',function(){
+                var _this = this;
+                var thefolderData = $(_this).data("url");
+                fs.readdir(thefolderData, function(err,data) {
+                    if (err) {
+                        return console.log(err);
+                    }else{
+                        data.forEach((name)=>{
+                            var reg = /^(.*)(\.)(.{1,8})$/;
+                            if(reg.test(name)){
+                                $(_this).after(`
+                                <li class="list_li indent" data-url="${thefolderData}/${name}">
+                                    <i class="el-icon-tickets elui_icon"></i>
+                                    ${name}
+                                </li>
+                                `)
+                                clickList();
+                            }else{
+                                $(_this).after(`
+                                <li class="folder indent" data-url="${thefolderData}/${name}">
+                                    <i class="el-icon-folder elui_icon"></i>
+                                    ${name}
+                                </li>
+                                `)
+                                clickFolder();
+                            }
+                        })
+                    }
+                });
+            })
+        }
+        //标题收缩
+        $(".one_title").on("click", function(){
+            $(".flie_list").slideToggle();
+            if($(".one_title_icon").attr('class') == 'el-icon-plus one_title_icon'){
+                $(".one_title_icon").attr('class', 'el-icon-minus one_title_icon');
+            }else{
+                $(".one_title_icon").attr('class', 'el-icon-plus one_title_icon');
+            }
+        });
+        $(".two_title").on("click", function(){
+            $(".mode_list").slideToggle();
+            if($(".two_title_icon").attr('class') == 'el-icon-plus two_title_icon'){
+                $(".two_title_icon").attr('class', 'el-icon-minus two_title_icon');
+            }else{
+                $(".two_title_icon").attr('class', 'el-icon-plus two_title_icon');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <title>张大帅grid布局</title>
+        <style>
+            *{
+                padding:0;
+                margin:0;
+            }
+            /* grid */
+            #container{
+                display:grid;
+                grid-template-columns: 100px auto 100px;
+                height: 100px;
+                font-size: 28px;
+                text-align: center;
+                line-height: 100px;
+            }
+            #mid{
+                background-color:lightcoral;
+                grid-area:1/2;
+            }
+            #left{
+                background-color: lightskyblue;
+                grid-area: 1/1;
+            }
+            #right{
+                background-color: lightpink;
+                grid-area:1/3;
+            }
+            /* flex */
+            #container_flex{
+                display: flex;
+                width: 100%;
+                height:100px;
+                font-size: 28px;
+                text-align: center;
+                line-height: 100px;
+            }
+            #mid_flex{
+                order:2;
+                background-color: lightpink;
+                flex-grow: 1;
+            }
+            #left_flex{
+                order:1;
+                background-color:lightcyan;
+                width:100px;
+                flex-grow:0;
+            }
+            #right_flex{
+                order:3;
+                background-color: lightgreen;
+                width:100px;
+                flex-grow: 0;
+            }
+            /* grid-two */
+            #container_two{
+                display:grid;
+                grid-template-columns: 100px auto 100px;
+                grid-template-rows: repeat(2, 100px);
+                height: 100px;
+                font-size: 28px;
+                text-align: center;
+                line-height: 100px;
+                }
+                #mid_two{
+                    background-color:lightcoral;
+                    grid-area:2/2;
+                }
+                #left_two{
+                    background-color: lightskyblue;
+                    grid-area: 2/3;
+                }
+                #right_two{
+                    background-color: lightpink;
+                    grid-area:2/1;
+                }
+                #four{
+                    background-color:lightcoral;
+                    grid-area:1/3;
+                }
+                #five{
+                    background-color: lightskyblue;
+                    grid-area:1/2;
+                }
+                #six{
+                    background-color: lightpink;
+                    grid-area:1/1;
+                }
+        </style>
+    </head>
+    <body>
+        <!-- flex是一维布局，grid是二维布局 -->
+        <h1>grid</h1>
+        <div id="container">
+            <div id="mid">2</div>
+            <div id="left">1</div>
+            <div id="right">3</div>
+        </div>
+        <h1>flex</h1>
+        <div id="container_flex">
+            <div id="mid_flex">2</div>
+            <div id="left_flex">1</div>
+            <div id="right_flex">3</div>
+        </div>
+        
+        <h1>grid网格</h1>
+        <div id="container_two">
+            <div id="mid_two">2</div>
+            <div id="left_two">1</div>
+            <div id="right_two">3</div>
+            <div id="four">4</div>
+            <div id="five">5</div>
+            <div id="six">6</div>
+        </div>
+    </body>
+</html>
